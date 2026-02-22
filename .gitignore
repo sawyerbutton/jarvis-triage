@@ -11,3 +11,10 @@ Thumbs.db
 # Notes (personal testing logs)
 notes/
 test-logs/
+
+# Node / App
+node_modules/
+dist/
+*.ehpk
+.env
+.env.*

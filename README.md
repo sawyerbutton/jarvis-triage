@@ -92,6 +92,31 @@ In any OpenClaw channel (Telegram, WhatsApp, etc.):
 
 The skill automatically detects content type and applies the appropriate triage level.
 
+## Even Hub App (G2 Smart Glasses)
+
+The `app/` directory contains a runnable Even Hub application that renders triage output on the Even Realities G2 HUD with R1 ring interaction.
+
+**Tech stack:** Vanilla TypeScript + Vite + `@evenrealities/even_hub_sdk`
+
+### Quick Start
+
+```bash
+cd app && npm install && npm run dev     # Start dev server on :5173
+evenhub-simulator http://localhost:5173  # Launch simulator
+```
+
+### Simulator Controls
+
+- **Scroll up/down** — navigate list items
+- **Click** — select / confirm
+- **Double-click** — cycle to next demo scenario
+
+### Demo Flow
+
+1. App starts with a Level 1 notification
+2. Double-click to cycle through Level 0-4 scenarios
+3. Level 4 walkthrough: Overview → Decision 1 → Decision 2 → Confirm → Done
+
 ## File Structure
 
 ```
@@ -99,7 +124,23 @@ jarvis-triage/
 ├── SKILL.md                          # Core skill instructions
 ├── references/
 │   ├── triage-levels.md              # Detailed level definitions + edge cases
-│   └── plan-mode-examples.md         # Plan type examples (new feature / refactor / bugfix / QA)
+│   └── plan-mode-examples.md         # Plan type examples
+├── app/                              # Even Hub App (G2 smart glasses)
+│   ├── index.html                    # WebView entry
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── vite.config.ts
+│   ├── app.json                      # Even Hub manifest
+│   └── src/
+│       ├── main.ts                   # Boot: bridge → state → render → demo
+│       ├── bridge.ts                 # SDK bridge wrapper (timeout + mock)
+│       ├── types.ts                  # TriagePayload, Decision, L4State
+│       ├── state.ts                  # Global app state
+│       ├── events.ts                 # Event normalization + dispatch
+│       ├── renderer/                 # HUD rendering engine
+│       ├── levels/                   # Level 0-4 handlers
+│       ├── audio/                    # PCM capture + STT interface
+│       └── demo/                     # Demo mode with 5 scenarios
 ├── README.md
 ├── LICENSE
 └── .gitignore
@@ -108,9 +149,9 @@ jarvis-triage/
 ## Roadmap
 
 - [x] **Phase 0** — Core SKILL.md with Level 0-4 triage logic
-- [ ] **Phase 0.5** — Real-world testing & prompt iteration
-- [ ] **Phase 1** — Voice integration (OpenClaw Voice / TTS)
-- [ ] **Phase 2** — AR HUD integration (Even Realities G1 via AugmentOS SDK)
+- [x] **Phase 0.5** — Even Hub App: HUD rendering + ring interaction + demo mode
+- [ ] **Phase 1** — Voice integration (STT via G2 mic + TTS)
+- [ ] **Phase 2** — AI backend integration (live triage payloads)
 - [ ] **Phase 3** — Auto-triage via AGENTS.md / Hooks (no manual trigger)
 - [ ] **Phase 4** — Open source "Jarvis Mode" full stack
 

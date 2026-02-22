@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jarvis Triage — Even G2</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      padding: 16px;
+    }
+    h1 { font-size: 18px; margin-bottom: 8px; }
+    #status {
+      padding: 8px 12px;
+      background: #1a1a2e;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    #dev-panel {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 12px;
+      font-family: monospace;
+    }
+    #dev-panel h2 { font-size: 13px; color: #888; margin-bottom: 6px; }
+    #state-display { white-space: pre-wrap; color: #7fdbca; margin-bottom: 8px; }
+    #event-log { white-space: pre-wrap; color: #999; max-height: 300px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <h1>🤖 Jarvis Triage</h1>
+  <div id="status">Initializing...</div>
+  <div id="dev-panel">
+    <h2>State</h2>
+    <div id="state-display">—</div>
+    <h2>Event Log</h2>
+    <div id="event-log"></div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
