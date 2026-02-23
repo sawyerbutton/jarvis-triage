@@ -9,6 +9,8 @@ export interface AppState {
   l4: L4State | null;
   /** Index of the current demo scenario */
   demoIndex: number;
+  /** Data source mode */
+  mode: 'demo' | 'remote';
 }
 
 export const state: AppState = {
@@ -16,6 +18,7 @@ export const state: AppState = {
   startupRendered: false,
   l4: null,
   demoIndex: 0,
+  mode: 'demo',
 };
 
 /** Reset state for a new payload */
@@ -39,7 +42,7 @@ export function syncDevPanel(): void {
   const p = state.payload;
   if (!p) { el.textContent = '—'; return; }
   const lines = [
-    `Level: ${p.level}  Title: ${p.title}`,
+    `Mode: ${state.mode}  Level: ${p.level}  Title: ${p.title}`,
     `Demo: ${state.demoIndex}`,
   ];
   if (state.l4) {

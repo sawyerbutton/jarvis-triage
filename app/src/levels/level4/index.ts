@@ -2,6 +2,7 @@ import { state } from '../../state';
 import { render } from '../../renderer';
 import { transition } from './state-machine';
 import { appendEventLog } from '../../events';
+import { sendDecision } from '../../remote/client';
 import type { UserAction } from '../../types';
 
 /**
@@ -18,5 +19,16 @@ export async function handleLevel4Action(
   state.l4 = transition(state.l4, action, selectedIndex);
 
   appendEventLog(`L4: ${prev} → ${state.l4.page} (action=${action.type}, sel=${selectedIndex})`);
+
+  // When L4 reaches 'done', send all choices back via WebSocket
+  if (state.mode === 'remote' && state.l4.page === 'done' && prev !== 'done') {
+    const context = state.l4.choices.map((c, i) => {
+      const q = state.payload?.decisions?.[i]?.question ?? `Q${i}`;
+      const label = c !== null ? (state.payload?.decisions?.[i]?.options[c]?.label ?? String(c)) : '?';
+      return `${q}: ${label}`;
+    }).join('; ');
+    sendDecision(4, -1, context);
+  }
+
   await render();
 }

@@ -1,6 +1,7 @@
 import { state } from '../state';
 import { render } from '../renderer';
 import { appendEventLog } from '../events';
+import { sendDecision } from '../remote/client';
 import type { UserAction } from '../types';
 
 /** Level 3 — Info Decision: same interaction as Level 2 but with more context */
@@ -13,11 +14,16 @@ export async function handleLevel3(
     if (decision) {
       const chosen = decision.options[selectedIndex];
       appendEventLog(`L3: selected "${chosen.label}" (index=${selectedIndex})`);
+
+      if (state.mode === 'remote') {
+        sendDecision(3, selectedIndex, chosen.label);
+      }
+
       if (state.payload) {
         state.payload = {
           ...state.payload,
           level: 1,
-          hudLines: [`✅ ${decision.question}: ${chosen.label}`],
+          hudLines: [`[OK] ${decision.question}: ${chosen.label}`],
         };
         await render();
       }

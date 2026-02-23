@@ -31,14 +31,42 @@
     #dev-panel h2 { font-size: 13px; color: #888; margin-bottom: 6px; }
     #state-display { white-space: pre-wrap; color: #7fdbca; margin-bottom: 8px; }
     #event-log { white-space: pre-wrap; color: #999; max-height: 300px; overflow-y: auto; }
+    #ws-status { font-weight: bold; }
+    #ws-input {
+      width: 100%;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      border: 1px solid #444;
+      border-radius: 4px;
+      padding: 6px;
+      font-family: monospace;
+      font-size: 11px;
+      resize: vertical;
+      margin: 4px 0;
+    }
+    #ws-send {
+      background: #2a4a6a;
+      color: #e0e0e0;
+      border: 1px solid #4a6a8a;
+      border-radius: 4px;
+      padding: 4px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    #ws-send:hover { background: #3a5a7a; }
   </style>
 </head>
 <body>
-  <h1>🤖 Jarvis Triage</h1>
+  <h1>Jarvis Triage</h1>
   <div id="status">Initializing...</div>
   <div id="dev-panel">
     <h2>State</h2>
     <div id="state-display">—</div>
+    <h2>Remote</h2>
+    <div>Status: <span id="ws-status">—</span></div>
+    <textarea id="ws-input" rows="4" placeholder='{"level":1,"title":"Test","hudLines":["Line 1"]}'></textarea>
+    <button id="ws-send">Send Payload</button>
     <h2>Event Log</h2>
     <div id="event-log"></div>
   </div>
