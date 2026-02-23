@@ -1,182 +1,139 @@
-# 🤖 Jarvis Triage — OpenClaw Skill
+# Jarvis Triage
 
-> Turn any OpenClaw output into a mobile-friendly, voice-first format.  
-> Walk and code. Walk and decide. No screen required.
+> Information compression layer for AR HUD interaction. Not tied to any specific AI platform.
 
-## What is this?
+Jarvis Triage compresses verbose AI output into a layered format optimized for **4-line AR HUD + ring interaction**. Feed it a 50-line plan, get back a structured approval flow you can complete without touching your phone.
 
-Jarvis Triage is an [OpenClaw](https://github.com/openclaw/openclaw) Skill that compresses long AI outputs into a layered format designed for **voice + AR HUD (4 lines)** interaction. It's the core intelligence layer of the "Jarvis Mode" project — enabling you to operate OpenClaw while walking, commuting, or away from your desk.
-
-**Core capability:** Take a 50-line Claude Code plan and turn it into a 30-second voice briefing + key decision points you can approve with one word.
-
-## The Problem
-
-OpenClaw is powerful, but its output is designed for screens — Telegram messages, terminal windows, web UIs. When you're away from your computer, you're cut off.
-
-What if you could:
-- 🚶 Approve a Claude Code plan while walking to lunch
-- 🎧 Get a voice briefing of your email analysis during your commute
-- 👓 See key decision points on AR glasses without stopping
-
-Jarvis Triage makes this possible by acting as an **information compression layer** between OpenClaw's raw output and minimal display interfaces.
-
-## How It Works
-
-### Information Triage (Level 0-4)
-
-| Level | Type | Output | Example |
-|-------|------|--------|---------|
-| 0 | Silent | Nothing | "Backup completed" |
-| 1 | Notify | 1 line | "✅ Email sent to Zhang San" |
-| 2 | Quick Decision | 2-3 lines + options | "Thursday or Friday for the meeting?" |
-| 3 | Info Decision | 3-4 lines + voice briefing | "3 vendor quotes compared..." |
-| 4 | Plan Review 🔥 | Structured approval flow | "JWT migration: 7 steps, 2 decisions needed" |
-
-### Plan Review Flow (Level 4)
-
-The killer feature. When Claude Code generates a 50-line implementation plan:
+## Architecture
 
 ```
-You: "Jarvis, triage this plan"
-
-Jarvis (voice): "Auth migration plan, 7 steps. Two decisions needed."
-
-HUD:
-┌──────────────────────────┐
-│ 🔧 JWT Migration (7 steps) │
-│ ❓ Decision 1/2: Token store │
-│   A: Cookie (secure/CORS)   │
-│   B: LocalStorage (simple)  │
-└──────────────────────────┘
-
-You: "Cookie"
-
-HUD updates → next decision → approve → code runs.
-You never stopped walking.
+Upstream            Relay Server         App (WebView)        Even G2 HUD
+(AI / CI / Bot)     ws://localhost:8080   localhost:5173       Smart Glasses
+     |                    |                    |                    |
+     | POST /push         |                    |                    |
+     | (TriagePayload)    |                    |                    |
+     |------------------->|                    |                    |
+     |                    | WS: payload        |                    |
+     |                    |------------------->|                    |
+     |                    |                    | SDK render         |
+     |                    |                    |------------------->|
+     |                    |                    |                    | User taps ring
+     |                    | WS: decision       |                    |
+     |                    |<-------------------|                    |
+     |                    |                    |                    |
 ```
 
-## Installation
+## Triage Levels
+
+| Level | Type | HUD Output | Interaction |
+|-------|------|------------|-------------|
+| 0 | Silent | None | None |
+| 1 | Notify | 1 line | View only |
+| 2 | Quick Decision | Question + 2-3 options | Tap to select |
+| 3 | Info Decision | Context + options | Tap to select |
+| 4 | Plan Review | Multi-step approval flow | Sequential decisions + confirm |
+
+## Quick Start
 
 ```bash
-# Clone the repo
-git clone https://github.com/YOUR_USERNAME/jarvis-triage.git
+# 1. Start the relay server
+cd server && npm install && npm run dev
 
-# Symlink to OpenClaw skills directory
-ln -s /path/to/jarvis-triage ~/.openclaw/skills/jarvis-triage
+# 2. Start the app (in another terminal)
+cd app && npm install && npm run dev
 
-# Start a new OpenClaw session — skill loads automatically
+# 3. Open in simulator (in another terminal)
+evenhub-simulator "http://localhost:5173?ws=ws://localhost:8080"
 ```
 
-Or install directly:
+## Modes
+
+### Remote Mode (default with `?ws=`)
+
+Push payloads from any system via the relay server:
 
 ```bash
-mkdir -p ~/.openclaw/skills
-cd ~/.openclaw/skills
-git clone https://github.com/YOUR_USERNAME/jarvis-triage.git
+# Push a notification
+curl -X POST http://localhost:8080/push \
+  -H 'Content-Type: application/json' \
+  -d '{"level":1,"title":"Build passed","source":"ci","hudLines":["[OK] Build #42 passed"]}'
+
+# Push a decision
+curl -X POST http://localhost:8080/push \
+  -H 'Content-Type: application/json' \
+  -d '{"level":2,"title":"Deploy target","source":"deploy-bot","decisions":[{"question":"Deploy where?","options":[{"label":"Staging"},{"label":"Production"}]}]}'
 ```
 
-## Usage
+User responses (decisions, approvals) are sent back through the same WebSocket connection. See [PROTOCOL.md](PROTOCOL.md) for the full schema.
 
-In any OpenClaw channel (Telegram, WhatsApp, etc.):
+### Demo Mode
 
-```
-# After any long output
-"Jarvis, triage this"
-
-# After a Claude Code plan
-"帮我审批一下这个plan"
-
-# General summarization
-"总结一下"
-```
-
-The skill automatically detects content type and applies the appropriate triage level.
-
-## Even Hub App (G2 Smart Glasses)
-
-The `app/` directory contains a runnable Even Hub application that renders triage output on the Even Realities G2 HUD with R1 ring interaction.
-
-**Tech stack:** Vanilla TypeScript + Vite + `@evenrealities/even_hub_sdk`
-
-### Quick Start
+Open the app without `?ws=` or use the built-in demo:
 
 ```bash
-cd app && npm install && npm run dev     # Start dev server on :5173
-evenhub-simulator http://localhost:5173  # Launch simulator
+evenhub-simulator http://localhost:5173
 ```
 
-### Simulator Controls
+- **Double-click** to cycle through Level 0-4 demo scenarios
+- **Click** to select options / confirm
+- **Scroll** to navigate lists
 
-- **Scroll up/down** — navigate list items
-- **Click** — select / confirm
-- **Double-click** — cycle to next demo scenario
+## Protocol
 
-### Demo Flow
+The relay server accepts `TriagePayload` JSON via `POST /push` and forwards it to all connected WebSocket clients. Client responses use typed messages (`decision` for L2/L3, `approval` for L4).
 
-1. App starts with a Level 1 notification
-2. Double-click to cycle through Level 0-4 scenarios
-3. Level 4 walkthrough: Overview → Decision 1 → Decision 2 → Confirm → Done
+Full specification: [PROTOCOL.md](PROTOCOL.md)
+
+## Testing
+
+```bash
+cd app && npm test          # Run all tests (vitest)
+cd app && npx tsc --noEmit  # Type check
+```
 
 ## File Structure
 
 ```
 jarvis-triage/
-├── SKILL.md                          # Core skill instructions
+├── SKILL.md                        # OpenClaw skill definition
+├── PROTOCOL.md                     # Wire protocol specification
+├── BP.md                           # Business plan (Chinese)
 ├── references/
-│   ├── triage-levels.md              # Detailed level definitions + edge cases
-│   └── plan-mode-examples.md         # Plan type examples
-├── app/                              # Even Hub App (G2 smart glasses)
-│   ├── index.html                    # WebView entry
+│   ├── triage-levels.md            # Level definitions + edge cases
+│   └── plan-mode-examples.md       # Plan type examples
+├── server/                         # WebSocket relay server
+│   ├── index.ts                    # Express + ws relay
+│   └── package.json
+├── app/                            # Even Hub App (G2 smart glasses)
+│   ├── app.json                    # Even Hub manifest
+│   ├── index.html
 │   ├── package.json
-│   ├── tsconfig.json
 │   ├── vite.config.ts
-│   ├── app.json                      # Even Hub manifest
+│   ├── vitest.config.ts
 │   └── src/
-│       ├── main.ts                   # Boot: bridge → state → render → demo
-│       ├── bridge.ts                 # SDK bridge wrapper (timeout + mock)
-│       ├── types.ts                  # TriagePayload, Decision, L4State
-│       ├── state.ts                  # Global app state
-│       ├── events.ts                 # Event normalization + dispatch
-│       ├── renderer/                 # HUD rendering engine
-│       ├── levels/                   # Level 0-4 handlers
-│       ├── audio/                    # PCM capture + STT interface
-│       └── demo/                     # Demo mode with 5 scenarios
-├── README.md
-├── LICENSE
-└── .gitignore
+│       ├── main.ts                 # Boot: bridge → state → events → render
+│       ├── bridge.ts               # SDK bridge wrapper
+│       ├── types.ts                # TriagePayload, Decision, AppState
+│       ├── state.ts                # Global app state
+│       ├── events.ts               # Ring/touch event normalization
+│       ├── renderer/               # HUD layout engine
+│       ├── levels/                 # Level 0-4 handlers
+│       ├── remote/                 # WebSocket client + protocol types
+│       ├── demo/                   # Demo mode scenarios
+│       └── __tests__/              # Unit tests (vitest)
+└── README.md
 ```
 
 ## Roadmap
 
-- [x] **Phase 0** — Core SKILL.md with Level 0-4 triage logic
-- [x] **Phase 0.5** — Even Hub App: HUD rendering + ring interaction + demo mode
-- [ ] **Phase 1** — Voice integration (STT via G2 mic + TTS)
-- [ ] **Phase 2** — AI backend integration (live triage payloads)
-- [ ] **Phase 3** — Auto-triage via AGENTS.md / Hooks (no manual trigger)
-- [ ] **Phase 4** — Open source "Jarvis Mode" full stack
-
-## Part of Jarvis Mode
-
-This skill is the first building block of a larger vision: **a Jarvis-like interface for OpenClaw** using voice + AR glasses. The full Jarvis Mode stack:
-
-```
-Voice Input (AirPods/G1 mic)
-    ↓
-OpenClaw + Jarvis Triage (this repo)
-    ↓
-Voice Output (TTS → AirPods) + HUD Output (BLE → AR glasses)
-```
-
-Architecture docs and hardware research: coming soon.
-
-## Contributing
-
-This project is in early experimental phase. Issues and PRs welcome — especially:
-
-- Real-world triage test results (did the compression lose important info?)
-- New plan type examples for `references/plan-mode-examples.md`
-- Edge cases where triage level classification fails
-- Prompt improvements for SKILL.md
+- [x] Core SKILL.md with Level 0-4 triage logic
+- [x] Even Hub App: HUD rendering + ring interaction + demo mode
+- [x] WebSocket relay server + remote payload input
+- [x] Protocol spec (PROTOCOL.md)
+- [ ] End-to-end demo scripts
+- [ ] Voice capture (G2 quad-mic -> PCM -> STT)
+- [ ] AI backend integration (live triage from upstream)
+- [ ] Auto-triage hooks (no manual trigger needed)
 
 ## License
 
