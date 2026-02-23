@@ -78,6 +78,18 @@ evenhub-simulator http://localhost:5173
 - **Click** to select options / confirm
 - **Scroll** to navigate lists
 
+## Demo Screenshots
+
+| Dev Panel | L1 — Notification |
+|:-:|:-:|
+| ![Dev Panel](assets/images/1.png) | ![L1 Notify](assets/images/2.png) |
+| Browser-side debug panel showing remote mode, WebSocket connected, and event log. | Glasses HUD displaying a one-line CI build notification. |
+
+| L2 — Quick Decision | L4 — Plan Review |
+|:-:|:-:|
+| ![L2 Decision](assets/images/3.png) | ![L4 Plan Review](assets/images/4.png) |
+| Ring-selectable deploy target with Staging / Production options. | Multi-step JWT migration plan with summary, risks, and approval flow. |
+
 ## Protocol
 
 The relay server accepts `TriagePayload` JSON via `POST /push` and forwards it to all connected WebSocket clients. Client responses use typed messages (`decision` for L2/L3, `approval` for L4).
@@ -98,6 +110,7 @@ jarvis-triage/
 ├── SKILL.md                        # OpenClaw skill definition
 ├── PROTOCOL.md                     # Wire protocol specification
 ├── BP.md                           # Business plan (Chinese)
+├── assets/images/                  # Demo screenshots (simulator + HUD)
 ├── references/
 │   ├── triage-levels.md            # Level definitions + edge cases
 │   └── plan-mode-examples.md       # Plan type examples
