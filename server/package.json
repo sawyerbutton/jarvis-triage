@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "description": "WebSocket relay server for Jarvis Triage payloads",
   "license": "MIT",
+  "author": "sawyerbutton",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sawyerbutton/jarvis-triage.git",
+    "directory": "server"
+  },
   "private": true,
   "type": "module",
   "scripts": {
