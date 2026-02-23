@@ -17,6 +17,8 @@ export interface Decision {
 export interface TriagePayload {
   level: TriageLevel;
   title: string;
+  /** User-defined source identifier, e.g. "claude-code", "ci", "home-assistant" */
+  source?: string;
   summary?: string;
   hudLines?: string[];
   decisions?: Decision[];

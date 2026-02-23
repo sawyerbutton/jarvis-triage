@@ -63,9 +63,31 @@ describe('protocol types', () => {
   });
 
   it('ClientMessage decision shape is valid', () => {
-    const msg: ClientMessage = { type: 'decision', level: 2, selectedIndex: 0, context: 'test' };
+    const msg: ClientMessage = {
+      type: 'decision',
+      source: 'test',
+      question: 'Pick one?',
+      selectedIndex: 0,
+      selectedLabel: 'A',
+    };
     expect(msg.type).toBe('decision');
-    expect(msg.level).toBe(2);
+    expect(msg.question).toBe('Pick one?');
+    expect(msg.selectedLabel).toBe('A');
+  });
+
+  it('ClientMessage approval shape is valid', () => {
+    const msg: ClientMessage = {
+      type: 'approval',
+      source: 'ci',
+      approved: true,
+      decisions: [
+        { question: 'Q1?', selectedIndex: 0, selectedLabel: 'Yes' },
+        { question: 'Q2?', selectedIndex: 1, selectedLabel: 'No' },
+      ],
+    };
+    expect(msg.type).toBe('approval');
+    expect(msg.approved).toBe(true);
+    expect(msg.decisions).toHaveLength(2);
   });
 
   it('ClientMessage pong shape is valid', () => {
@@ -106,16 +128,18 @@ describe('WebSocket client', () => {
     client.connectRemote('ws://localhost:8080');
     await vi.advanceTimersByTimeAsync(1);
 
-    client.sendDecision(2, 1, 'Option B');
+    client.sendDecision('Pick one?', 1, 'Option B');
 
-    // Access the mock ws to check sent data
-    // The ws is internal, so we check indirectly - no error thrown means success
     expect(client.getConnectionStatus()).toBe('connected');
   });
 
   it('sendDecision does not throw when disconnected', () => {
     // Never connected, so ws is null
-    expect(() => client.sendDecision(2, 0)).not.toThrow();
+    expect(() => client.sendDecision('Q?', 0, 'A')).not.toThrow();
+  });
+
+  it('sendApproval does not throw when disconnected', () => {
+    expect(() => client.sendApproval(true, [])).not.toThrow();
   });
 
   it('disconnect prevents reconnection', async () => {
@@ -135,9 +159,6 @@ describe('WebSocket client', () => {
     client.connectRemote('ws://localhost:8080');
     await vi.advanceTimersByTimeAsync(1);
 
-    // Get the mock WS instance and simulate a bad message
-    // We can't easily access the internal ws, but we can verify the module doesn't crash
-    // by checking that status is still connected after receiving garbage
     expect(client.getConnectionStatus()).toBe('connected');
   });
 });

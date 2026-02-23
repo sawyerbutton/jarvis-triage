@@ -16,7 +16,7 @@ export async function handleLevel2(
       appendEventLog(`L2: selected "${chosen.label}" (index=${selectedIndex})`);
 
       if (state.mode === 'remote') {
-        sendDecision(2, selectedIndex, chosen.label);
+        sendDecision(decision.question, selectedIndex, chosen.label);
       }
 
       // Show confirmation as notification

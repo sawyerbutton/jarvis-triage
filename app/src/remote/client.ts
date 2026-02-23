@@ -1,7 +1,7 @@
 import { loadPayload, syncDevPanel, state } from '../state';
 import { render } from '../renderer';
 import { appendEventLog } from '../events';
-import type { ServerMessage, ClientMessage } from './protocol';
+import type { ServerMessage, ClientMessage, DecisionResult } from './protocol';
 
 let ws: WebSocket | null = null;
 let reconnectAttempts = 0;
@@ -78,8 +78,25 @@ function maybeReconnect(url: string): void {
   }
 }
 
-export function sendDecision(level: number, selectedIndex: number, context?: string): void {
-  sendMessage({ type: 'decision', level, selectedIndex, context });
+/** Send a single decision result (L2/L3) */
+export function sendDecision(question: string, selectedIndex: number, selectedLabel: string): void {
+  sendMessage({
+    type: 'decision',
+    source: state.payload?.source,
+    question,
+    selectedIndex,
+    selectedLabel,
+  });
+}
+
+/** Send a full approval result (L4) */
+export function sendApproval(approved: boolean, decisions: DecisionResult[]): void {
+  sendMessage({
+    type: 'approval',
+    source: state.payload?.source,
+    approved,
+    decisions,
+  });
 }
 
 function sendMessage(msg: ClientMessage): void {

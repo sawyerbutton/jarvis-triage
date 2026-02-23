@@ -2,8 +2,9 @@ import { state } from '../../state';
 import { render } from '../../renderer';
 import { transition } from './state-machine';
 import { appendEventLog } from '../../events';
-import { sendDecision } from '../../remote/client';
+import { sendApproval } from '../../remote/client';
 import type { UserAction } from '../../types';
+import type { DecisionResult } from '../../remote/protocol';
 
 /**
  * Level 4 coordinator: takes a user action and advances the L4 state machine,
@@ -20,14 +21,22 @@ export async function handleLevel4Action(
 
   appendEventLog(`L4: ${prev} → ${state.l4.page} (action=${action.type}, sel=${selectedIndex})`);
 
-  // When L4 reaches 'done', send all choices back via WebSocket
+  // When L4 reaches 'done', send structured approval via WebSocket
   if (state.mode === 'remote' && state.l4.page === 'done' && prev !== 'done') {
-    const context = state.l4.choices.map((c, i) => {
-      const q = state.payload?.decisions?.[i]?.question ?? `Q${i}`;
-      const label = c !== null ? (state.payload?.decisions?.[i]?.options[c]?.label ?? String(c)) : '?';
-      return `${q}: ${label}`;
-    }).join('; ');
-    sendDecision(4, -1, context);
+    const decisions: DecisionResult[] = state.l4.choices.map((c, i) => {
+      const d = state.payload?.decisions?.[i];
+      return {
+        question: d?.question ?? `Q${i}`,
+        selectedIndex: c ?? -1,
+        selectedLabel: c !== null ? (d?.options[c]?.label ?? String(c)) : '?',
+      };
+    });
+    sendApproval(true, decisions);
+  }
+
+  // When L4 confirmation → overview (暂缓), send rejected approval
+  if (state.mode === 'remote' && prev === 'confirmation' && state.l4.page === 'overview' && action.type === 'click' && selectedIndex === 1) {
+    sendApproval(false, []);
   }
 
   await render();

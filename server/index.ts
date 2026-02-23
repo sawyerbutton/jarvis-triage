@@ -75,7 +75,11 @@ wss.on('connection', (ws) => {
     try {
       const msg = JSON.parse(data.toString());
       if (msg.type === 'decision') {
-        console.log(`[decision] level=${msg.level} selected=${msg.selectedIndex} context=${msg.context ?? ''}`);
+        console.log(`[decision] source=${msg.source ?? '-'} "${msg.question}" → "${msg.selectedLabel}" (index=${msg.selectedIndex})`);
+      } else if (msg.type === 'approval') {
+        const status = msg.approved ? 'APPROVED' : 'REJECTED';
+        const choices = (msg.decisions ?? []).map((d: { question: string; selectedLabel: string }) => `${d.question}: ${d.selectedLabel}`).join(', ');
+        console.log(`[approval] source=${msg.source ?? '-'} ${status} [${choices}]`);
       } else if (msg.type === 'pong') {
         // heartbeat response, ignore
       } else {

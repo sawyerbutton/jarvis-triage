@@ -16,7 +16,7 @@ export async function handleLevel3(
       appendEventLog(`L3: selected "${chosen.label}" (index=${selectedIndex})`);
 
       if (state.mode === 'remote') {
-        sendDecision(3, selectedIndex, chosen.label);
+        sendDecision(decision.question, selectedIndex, chosen.label);
       }
 
       if (state.payload) {
