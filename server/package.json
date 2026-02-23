@@ -1,6 +1,8 @@
 {
   "name": "jarvis-triage-relay",
   "version": "0.1.0",
+  "description": "WebSocket relay server for Jarvis Triage payloads",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "scripts": {

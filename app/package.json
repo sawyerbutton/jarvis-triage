@@ -1,6 +1,8 @@
 {
   "name": "jarvis-triage-app",
   "version": "0.1.0",
+  "description": "Even Hub App for Jarvis Triage — HUD rendering on Even G2 smart glasses",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "scripts": {

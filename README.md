@@ -101,6 +101,11 @@ jarvis-triage/
 ├── references/
 │   ├── triage-levels.md            # Level definitions + edge cases
 │   └── plan-mode-examples.md       # Plan type examples
+├── scripts/
+│   ├── demo.sh                     # Push sample payloads to relay
+│   ├── ai-backend-demo.sh         # Simulate AI-to-HUD pipeline
+│   ├── auto-triage-demo.sh        # Simulate automatic event triage
+│   └── start-demo.sh              # One-command full demo environment
 ├── server/                         # WebSocket relay server
 │   ├── index.ts                    # Express + ws relay
 │   └── package.json
@@ -130,7 +135,7 @@ jarvis-triage/
 - [x] Even Hub App: HUD rendering + ring interaction + demo mode
 - [x] WebSocket relay server + remote payload input
 - [x] Protocol spec (PROTOCOL.md)
-- [ ] End-to-end demo scripts
+- [x] End-to-end demo scripts
 - [ ] Voice capture (G2 quad-mic -> PCM -> STT)
 - [ ] AI backend integration (live triage from upstream)
 - [ ] Auto-triage hooks (no manual trigger needed)
