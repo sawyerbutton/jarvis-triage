@@ -60,9 +60,22 @@ export function toUserAction(event: EvenHubEvent): UserAction | null {
   }
 }
 
-/** Get the selected list item index from a list event, if available */
+/**
+ * Get the selected list item index from a list event, if available.
+ *
+ * IMPORTANT: The SDK's `fromJson` normalises `currentSelectItemIndex: 0` to
+ * `undefined`, so when a listEvent exists but the index is undefined we
+ * default to 0 (the first / currently-highlighted item).
+ */
 export function getListSelection(event: EvenHubEvent): number | undefined {
-  return event.listEvent?.currentSelectItemIndex ?? undefined;
+  if (event.listEvent) {
+    return event.listEvent.currentSelectItemIndex ?? 0;
+  }
+  // Fallback: check jsonData for common key names
+  const json = (event.jsonData ?? {}) as Record<string, unknown>;
+  const raw = json.currentSelectItemIndex ?? json.current_select_item_index;
+  if (typeof raw === 'number') return raw;
+  return undefined;
 }
 
 /** Append to the browser-side event log */

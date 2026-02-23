@@ -127,10 +127,10 @@ export function level3Layout(payload: TriagePayload): PageConfig {
 // ---------------------------------------------------------------------------
 
 export function level4OverviewLayout(payload: TriagePayload): PageConfig {
-  const title = `🔧 ${payload.title}`;
+  const title = `[Plan] ${payload.title}`;
   const summaryLines: string[] = [];
   if (payload.summary) summaryLines.push(payload.summary);
-  if (payload.risks?.length) summaryLines.push(`⚠️ ${payload.risks.join('; ')}`);
+  if (payload.risks?.length) summaryLines.push(`[!] ${payload.risks.join('; ')}`);
   const summaryText = summaryLines.join('\n') || '查看详情';
 
   return {
@@ -181,9 +181,9 @@ export function level4OverviewLayout(payload: TriagePayload): PageConfig {
 
 export function level4DecisionLayout(payload: TriagePayload, l4: L4State): PageConfig {
   const decision = payload.decisions![l4.decisionIndex];
-  const progress = `❓ 决策 ${l4.decisionIndex + 1}/${l4.totalDecisions}`;
+  const progress = `[?] 决策 ${l4.decisionIndex + 1}/${l4.totalDecisions}`;
   const prevText = l4.decisionIndex > 0 && l4.choices[l4.decisionIndex - 1] !== null
-    ? `✅ 上一步: ${payload.decisions![l4.decisionIndex - 1].options[l4.choices[l4.decisionIndex - 1]!].label}`
+    ? `[OK] 上一步: ${payload.decisions![l4.decisionIndex - 1].options[l4.choices[l4.decisionIndex - 1]!].label}`
     : '';
 
   const options = decision.options.map(o => o.label);
@@ -238,10 +238,10 @@ export function level4ConfirmationLayout(payload: TriagePayload, l4: L4State): P
   const choiceLines = payload.decisions!.map((d, i) => {
     const idx = l4.choices[i];
     const chosen = idx !== null ? d.options[idx].label : '?';
-    return `✅ ${d.question}: ${chosen}`;
+    return `[OK] ${d.question}: ${chosen}`;
   });
   const summaryText = choiceLines.join('\n');
-  const riskText = payload.risks?.length ? `⚠️ ${payload.risks.join('; ')}` : '';
+  const riskText = payload.risks?.length ? `[!] ${payload.risks.join('; ')}` : '';
 
   return {
     containerTotalNum: 3,
@@ -296,7 +296,7 @@ export function level4DoneLayout(): PageConfig {
       new TextContainerProperty({
         containerID: 1,
         containerName: 'done',
-        content: '✅ Plan approved\n双击返回',
+        content: '[OK] Plan approved\n双击返回',
         xPosition: 8,
         yPosition: 100,
         width: 560,
