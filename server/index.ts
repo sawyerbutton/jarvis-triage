@@ -80,9 +80,19 @@ wss.on('connection', (ws) => {
         const status = msg.approved ? 'APPROVED' : 'REJECTED';
         const choices = (msg.decisions ?? []).map((d: { question: string; selectedLabel: string }) => `${d.question}: ${d.selectedLabel}`).join(', ');
         console.log(`[approval] source=${msg.source ?? '-'} ${status} [${choices}]`);
-      } else if (msg.type === 'pong') {
-        // heartbeat response, ignore
-      } else {
+      }
+
+      // Forward decision/approval messages to other clients (e.g. MCP server)
+      if (msg.type === 'decision' || msg.type === 'approval') {
+        const forward = JSON.stringify(msg);
+        for (const client of clients) {
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            client.send(forward);
+          }
+        }
+      }
+
+      if (msg.type !== 'decision' && msg.type !== 'approval' && msg.type !== 'pong') {
         console.log(`[ws] unknown message type: ${msg.type}`);
       }
     } catch {

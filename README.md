@@ -90,6 +90,39 @@ evenhub-simulator http://localhost:5173
 | ![L2 Decision](assets/images/3.png) | ![L4 Plan Review](assets/images/4.png) |
 | Ring-selectable deploy target with Staging / Production options. | Multi-step JWT migration plan with summary, risks, and approval flow. |
 
+## MCP Server (Claude Code Integration)
+
+The MCP server lets Claude Code natively push triage payloads to the Even G2 HUD and receive user responses.
+
+### Setup
+
+1. Start the relay server: `cd server && npm run dev`
+2. Install MCP dependencies: `cd mcp && npm install`
+3. The `.mcp.json` in the repo root auto-configures Claude Code when you open the project.
+
+### Tools
+
+| Tool | Description |
+|------|-------------|
+| `jarvis_status` | Check relay server connectivity and client count |
+| `jarvis_notify` | Send a one-line notification to HUD (Level 1) |
+| `jarvis_decide` | Push a decision and wait for user selection (Level 2/3) |
+| `jarvis_approve` | Push a multi-step plan approval flow (Level 4) |
+
+### Manual Testing
+
+```bash
+cd mcp && npx @modelcontextprotocol/inspector npx tsx src/index.ts
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `JARVIS_RELAY_URL` | `http://localhost:8080` | Relay server HTTP URL |
+| `JARVIS_RELAY_WS_URL` | (derived from HTTP URL) | Relay server WebSocket URL |
+| `JARVIS_SOURCE` | `claude-code` | Default source identifier |
+
 ## Protocol
 
 The relay server accepts `TriagePayload` JSON via `POST /push` and forwards it to all connected WebSocket clients. Client responses use typed messages (`decision` for L2/L3, `approval` for L4).
@@ -119,6 +152,19 @@ jarvis-triage/
 │   ├── ai-backend-demo.sh         # Simulate AI-to-HUD pipeline
 │   ├── auto-triage-demo.sh        # Simulate automatic event triage
 │   └── start-demo.sh              # One-command full demo environment
+├── mcp/                            # MCP server (Claude Code integration)
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── src/
+│       ├── index.ts                # MCP entry point (stdio transport)
+│       ├── types.ts                # Shared triage types
+│       ├── config.ts               # Env-based configuration
+│       ├── relay-client.ts         # HTTP + WebSocket relay client
+│       └── tools/                  # MCP tool implementations
+│           ├── status.ts           # jarvis_status
+│           ├── notify.ts           # jarvis_notify
+│           ├── decide.ts           # jarvis_decide
+│           └── approve.ts          # jarvis_approve
 ├── server/                         # WebSocket relay server
 │   ├── index.ts                    # Express + ws relay
 │   └── package.json
@@ -150,7 +196,7 @@ jarvis-triage/
 - [x] Protocol spec (PROTOCOL.md)
 - [x] End-to-end demo scripts
 - [ ] Voice capture (G2 quad-mic -> PCM -> STT)
-- [ ] AI backend integration (live triage from upstream)
+- [x] AI backend integration (MCP server for Claude Code)
 - [ ] Auto-triage hooks (no manual trigger needed)
 
 ## License

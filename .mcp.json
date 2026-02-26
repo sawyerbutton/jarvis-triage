@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "jarvis-triage": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["tsx", "mcp/src/index.ts"],
+      "env": {
+        "JARVIS_RELAY_URL": "http://localhost:8080"
+      }
+    }
+  }
+}
