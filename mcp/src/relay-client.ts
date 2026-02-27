@@ -7,6 +7,7 @@ interface Waiter {
   resolve: (msg: RelayResponse) => void;
   reject: (err: Error) => void;
   timer: ReturnType<typeof setTimeout>;
+  payload?: TriagePayload;
 }
 
 function log(msg: string): void {
@@ -17,6 +18,13 @@ export class RelayClient {
   private ws: WebSocket | null = null;
   private waiters: Waiter[] = [];
   private connectPromise: Promise<void> | null = null;
+
+  // Error recovery state
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 10;
+  private baseReconnectDelay = 1000;
+  private isReconnecting = false;
+  private intentionalDisconnect = false;
 
   // --- HTTP methods ---
 
@@ -48,6 +56,8 @@ export class RelayClient {
     this.connectPromise = this.connect();
     try {
       await this.connectPromise;
+      this.intentionalDisconnect = false;
+      this.reconnectAttempts = 0;
     } finally {
       this.connectPromise = null;
     }
@@ -112,12 +122,19 @@ export class RelayClient {
     ws.on('close', () => {
       log('disconnected');
       this.ws = null;
-      // Reject all pending waiters
-      for (const w of this.waiters) {
-        clearTimeout(w.timer);
-        w.reject(new Error('WebSocket disconnected'));
+
+      if (this.intentionalDisconnect) {
+        // User called disconnect() — reject all waiters immediately
+        this.rejectAllWaiters('Client disconnected');
+        return;
       }
-      this.waiters = [];
+
+      if (this.waiters.length > 0) {
+        // Unexpected disconnect with pending waiters — try to reconnect
+        log(`${this.waiters.length} pending waiter(s), attempting auto-reconnect`);
+        this.autoReconnect();
+      }
+      // No pending waiters — just clean up, don't reconnect
     });
 
     ws.on('error', (err) => {
@@ -125,50 +142,108 @@ export class RelayClient {
     });
   }
 
-  waitForDecision(question: string, timeoutMs: number): Promise<RelayResponse> {
+  private async autoReconnect(): Promise<void> {
+    if (this.isReconnecting) return;
+    this.isReconnecting = true;
+
+    try {
+      while (this.reconnectAttempts < this.maxReconnectAttempts && this.waiters.length > 0) {
+        this.reconnectAttempts++;
+        const delay = Math.min(
+          this.baseReconnectDelay * Math.pow(2, this.reconnectAttempts - 1),
+          30000,
+        );
+        log(`auto-reconnect attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`);
+
+        await new Promise((r) => setTimeout(r, delay));
+
+        // Check if waiters were cleared during the delay (e.g. all timed out)
+        if (this.waiters.length === 0) {
+          log('no more pending waiters, stopping auto-reconnect');
+          break;
+        }
+
+        try {
+          await this.connect(1, 0);
+          // Success — reset counter
+          this.reconnectAttempts = 0;
+          log('auto-reconnect succeeded, re-pushing payloads');
+
+          // Re-push all waiter payloads (fire-and-forget)
+          for (const w of this.waiters) {
+            if (w.payload) {
+              this.pushPayload(w.payload).catch((err) => {
+                log(`re-push failed: ${err.message}`);
+              });
+            }
+          }
+          return;
+        } catch {
+          log('auto-reconnect attempt failed');
+        }
+      }
+
+      // Exhausted retries — reject remaining waiters
+      if (this.waiters.length > 0) {
+        log('auto-reconnect exhausted, rejecting waiters');
+        this.rejectAllWaiters('Auto-reconnect failed after max attempts');
+      }
+    } finally {
+      this.isReconnecting = false;
+    }
+  }
+
+  private rejectAllWaiters(message: string): void {
+    for (const w of this.waiters) {
+      clearTimeout(w.timer);
+      w.reject(new Error(message));
+    }
+    this.waiters = [];
+  }
+
+  waitForDecision(correlationId: string, timeoutMs: number, payload?: TriagePayload): Promise<RelayResponse> {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         const idx = this.waiters.findIndex((w) => w.timer === timer);
         if (idx !== -1) this.waiters.splice(idx, 1);
-        reject(new Error(`Timed out waiting for decision on "${question}" (${timeoutMs / 1000}s)`));
+        reject(new Error(`Timed out waiting for decision [${correlationId}] (${timeoutMs / 1000}s)`));
       }, timeoutMs);
 
       this.waiters.push({
-        match: (msg) => msg.type === 'decision' && (msg as any).question === question,
+        match: (msg) => msg.type === 'decision' && msg.correlationId === correlationId,
         resolve,
         reject,
         timer,
+        payload,
       });
     });
   }
 
-  waitForApproval(source: string, timeoutMs: number): Promise<RelayResponse> {
+  waitForApproval(correlationId: string, timeoutMs: number, payload?: TriagePayload): Promise<RelayResponse> {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         const idx = this.waiters.findIndex((w) => w.timer === timer);
         if (idx !== -1) this.waiters.splice(idx, 1);
-        reject(new Error(`Timed out waiting for approval from source "${source}" (${timeoutMs / 1000}s)`));
+        reject(new Error(`Timed out waiting for approval [${correlationId}] (${timeoutMs / 1000}s)`));
       }, timeoutMs);
 
       this.waiters.push({
-        match: (msg) => msg.type === 'approval' && (msg.source ?? '') === source,
+        match: (msg) => msg.type === 'approval' && msg.correlationId === correlationId,
         resolve,
         reject,
         timer,
+        payload,
       });
     });
   }
 
   disconnect(): void {
+    this.intentionalDisconnect = true;
     if (this.ws) {
       this.ws.close();
       this.ws = null;
     }
-    for (const w of this.waiters) {
-      clearTimeout(w.timer);
-      w.reject(new Error('Client disconnected'));
-    }
-    this.waiters = [];
+    this.rejectAllWaiters('Client disconnected');
   }
 }
 

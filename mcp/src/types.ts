@@ -22,12 +22,15 @@ export interface TriagePayload {
   hudLines?: string[];
   decisions?: Decision[];
   risks?: string[];
+  /** Unique ID to correlate responses with requests (multi-user safe) */
+  correlationId?: string;
 }
 
 /** WebSocket message: user selected an option (L2/L3) */
 export interface DecisionMessage {
   type: 'decision';
   source?: string;
+  correlationId?: string;
   question: string;
   selectedLabel: string;
   selectedIndex: number;
@@ -37,6 +40,7 @@ export interface DecisionMessage {
 export interface ApprovalMessage {
   type: 'approval';
   source?: string;
+  correlationId?: string;
   approved: boolean;
   decisions: { question: string; selectedLabel: string; selectedIndex: number }[];
 }

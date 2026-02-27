@@ -17,6 +17,7 @@ export type ClientMessage =
   | {
       type: 'decision';
       source?: string;
+      correlationId?: string;
       question: string;
       selectedIndex: number;
       selectedLabel: string;
@@ -24,6 +25,7 @@ export type ClientMessage =
   | {
       type: 'approval';
       source?: string;
+      correlationId?: string;
       approved: boolean;
       decisions: DecisionResult[];
     }

@@ -46,6 +46,7 @@
 | `hudLines` | `string[]` | 可选。HUD 正文内容，每条是一行显示文本 |
 | `decisions` | `Decision[]` | 可选。决策点数组 |
 | `risks` | `string[]` | 可选。风险标注列表，L4 显示 |
+| `correlationId` | `string` | 可选。唯一请求 ID（UUID），用于将回传消息与原始请求精确匹配，支持多用户并发 |
 
 #### Decision
 
@@ -190,6 +191,7 @@
 |---|---|---|
 | `type` | `"decision"` | 固定值 |
 | `source` | `string?` | 透传 payload 的 `source` |
+| `correlationId` | `string?` | 透传 payload 的 `correlationId`，用于精确匹配请求 |
 | `question` | `string` | 原始问题文本 |
 | `selectedIndex` | `number` | 选中的 option 下标 (0-based) |
 | `selectedLabel` | `string` | 选中的 option 文本 |
@@ -225,6 +227,7 @@ L4 审批流完成或用户主动暂缓时发送。
 |---|---|---|
 | `type` | `"approval"` | 固定值 |
 | `source` | `string?` | 透传 payload 的 `source` |
+| `correlationId` | `string?` | 透传 payload 的 `correlationId`，用于精确匹配请求 |
 | `approved` | `boolean` | `true` = 确认执行，`false` = 暂缓 |
 | `decisions` | `DecisionResult[]` | 每个决策的结构化结果，暂缓时为空数组 |
 

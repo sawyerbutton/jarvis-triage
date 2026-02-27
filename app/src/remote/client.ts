@@ -83,6 +83,7 @@ export function sendDecision(question: string, selectedIndex: number, selectedLa
   sendMessage({
     type: 'decision',
     source: state.payload?.source,
+    correlationId: state.payload?.correlationId,
     question,
     selectedIndex,
     selectedLabel,
@@ -94,6 +95,7 @@ export function sendApproval(approved: boolean, decisions: DecisionResult[]): vo
   sendMessage({
     type: 'approval',
     source: state.payload?.source,
+    correlationId: state.payload?.correlationId,
     approved,
     decisions,
   });

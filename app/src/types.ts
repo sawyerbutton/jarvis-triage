@@ -23,6 +23,8 @@ export interface TriagePayload {
   hudLines?: string[];
   decisions?: Decision[];
   risks?: string[];
+  /** Unique ID to correlate responses with requests (multi-user safe) */
+  correlationId?: string;
 }
 
 /** User action types from ring/touch events */

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { randomUUID } from 'node:crypto';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { relay } from '../relay-client.js';
 import { config } from '../config.js';
@@ -37,11 +38,13 @@ export function registerApprove(server: McpServer): void {
     async ({ title, summary, decisions, risks, source, timeout_seconds }) => {
       const src = source ?? config.defaultSource;
       const timeoutMs = (timeout_seconds ?? DEFAULT_TIMEOUT_S) * 1000;
+      const correlationId = randomUUID();
 
       const payload: TriagePayload = {
         level: 4,
         title,
         source: src,
+        correlationId,
         decisions,
         ...(summary ? { summary } : {}),
         ...(risks?.length ? { risks } : {}),
@@ -49,7 +52,7 @@ export function registerApprove(server: McpServer): void {
 
       try {
         await relay.ensureConnected();
-        const waitPromise = relay.waitForApproval(src, timeoutMs);
+        const waitPromise = relay.waitForApproval(correlationId, timeoutMs, payload);
         await relay.pushPayload(payload);
         const response = (await waitPromise) as ApprovalMessage;
 

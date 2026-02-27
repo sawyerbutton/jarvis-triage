@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { randomUUID } from 'node:crypto';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { relay } from '../relay-client.js';
 import { config } from '../config.js';
@@ -30,18 +31,20 @@ export function registerDecide(server: McpServer): void {
     async ({ title, question, options, context, source, timeout_seconds }) => {
       const src = source ?? config.defaultSource;
       const timeoutMs = (timeout_seconds ?? DEFAULT_TIMEOUT_S) * 1000;
+      const correlationId = randomUUID();
 
       const payload: TriagePayload = {
         level: context ? 3 : 2,
         title,
         source: src,
+        correlationId,
         decisions: [{ question, options }],
         ...(context ? { summary: context } : {}),
       };
 
       try {
         await relay.ensureConnected();
-        const waitPromise = relay.waitForDecision(question, timeoutMs);
+        const waitPromise = relay.waitForDecision(correlationId, timeoutMs, payload);
         await relay.pushPayload(payload);
         const response = (await waitPromise) as DecisionMessage;
 
