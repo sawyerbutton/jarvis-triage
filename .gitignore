@@ -13,6 +13,9 @@ Thumbs.db
 notes/
 test-logs/
 
+# Business plan (private)
+BP.md
+
 # Node / App
 node_modules/
 dist/
