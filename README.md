@@ -164,6 +164,7 @@ The MCP integration tests start an embedded relay server on a random port and ex
 jarvis-triage/
 ├── SKILL.md                        # OpenClaw skill definition
 ├── PROTOCOL.md                     # Wire protocol specification
+├── CHANGELOG.md                    # Release notes
 ├── BP.md                           # Business plan (Chinese)
 ├── assets/images/                  # Demo screenshots (simulator + HUD)
 ├── references/
@@ -228,6 +229,12 @@ jarvis-triage/
 - [ ] Voice capture (G2 quad-mic -> PCM -> STT)
 - [ ] Auto-triage hooks (no manual trigger needed)
 - [ ] HTTP long-poll endpoint for non-MCP tools (Codex, Cursor, etc.)
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes.
+
+**Latest: v0.2.0** — MCP server for Claude Code, 67 tests, browser sim buttons, LLM tool integration docs.
 
 ## License
 
