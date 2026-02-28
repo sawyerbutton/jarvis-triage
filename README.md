@@ -42,8 +42,13 @@ cd server && npm install && npm run dev
 # 2. Start the app (in another terminal)
 cd app && npm install && npm run dev
 
-# 3. Open in simulator (in another terminal)
+# 3a. Open in simulator (preferred — simulates G2 display + ring input)
 evenhub-simulator "http://localhost:5173?ws=ws://localhost:8080"
+
+# 3b. Or open in browser (works on any OS including WSL2)
+#     Navigate to: http://localhost:5173?ws=ws://localhost:8080
+#     Use the "Simulate Ring Input" buttons (Scroll Up / Click / Scroll Down)
+#     to interact with L2/L3/L4 decision flows
 ```
 
 ## Modes
@@ -123,6 +128,17 @@ cd mcp && npx @modelcontextprotocol/inspector npx tsx src/index.ts
 | `JARVIS_RELAY_WS_URL` | (derived from HTTP URL) | Relay server WebSocket URL |
 | `JARVIS_SOURCE` | `claude-code` | Default source identifier |
 
+## LLM Tool Integration
+
+The system has two integration paths. Any LLM tool can push to the HUD — no per-tool adaptation needed.
+
+| Path | Tools | Push | Receive Response |
+|------|-------|------|-----------------|
+| **MCP (stdio)** | Claude Code | `jarvis_decide` / `jarvis_approve` | Built-in — waiter blocks until user responds |
+| **HTTP POST** | Codex, Cursor, curl, any script | `POST /push` | Connect via WS and listen for `decision`/`approval` messages |
+
+Claude Code auto-discovers the MCP server via `.mcp.json` in the repo root. For other tools, push payloads via HTTP and optionally listen on WebSocket for responses (see [PROTOCOL.md](PROTOCOL.md) section 6).
+
 ## Protocol
 
 The relay server accepts `TriagePayload` JSON via `POST /push` and forwards it to all connected WebSocket clients. Client responses use typed messages (`decision` for L2/L3, `approval` for L4).
@@ -132,9 +148,15 @@ Full specification: [PROTOCOL.md](PROTOCOL.md)
 ## Testing
 
 ```bash
-cd app && npm test          # Run all tests (vitest)
+# App tests
+cd app && npm test          # Unit tests (vitest)
 cd app && npx tsc --noEmit  # Type check
+
+# MCP tests (52 unit + 15 integration = 67 total)
+cd mcp && npm test          # Unit + integration tests
 ```
+
+The MCP integration tests start an embedded relay server on a random port and exercise the full `RelayClient ↔ relay ↔ simulated app` chain over real TCP/WebSocket connections. Only `config` is mocked (to inject the dynamic port); `fetch()` and `WebSocket` are real.
 
 ## File Structure
 
@@ -160,6 +182,11 @@ jarvis-triage/
 │       ├── types.ts                # Shared triage types
 │       ├── config.ts               # Env-based configuration
 │       ├── relay-client.ts         # HTTP + WebSocket relay client
+│       ├── __tests__/
+│       │   ├── config.test.ts     # Config env-var tests
+│       │   ├── relay-client.test.ts # Unit tests (mock WS)
+│       │   ├── tools.test.ts      # MCP tool handler tests
+│       │   └── integration.test.ts # Integration tests (real relay)
 │       └── tools/                  # MCP tool implementations
 │           ├── status.ts           # jarvis_status
 │           ├── notify.ts           # jarvis_notify
@@ -195,9 +222,12 @@ jarvis-triage/
 - [x] WebSocket relay server + remote payload input
 - [x] Protocol spec (PROTOCOL.md)
 - [x] End-to-end demo scripts
-- [ ] Voice capture (G2 quad-mic -> PCM -> STT)
 - [x] AI backend integration (MCP server for Claude Code)
+- [x] MCP unit tests (52) + integration tests with real relay (15)
+- [x] Browser-based sim buttons for testing without simulator/glasses
+- [ ] Voice capture (G2 quad-mic -> PCM -> STT)
 - [ ] Auto-triage hooks (no manual trigger needed)
+- [ ] HTTP long-poll endpoint for non-MCP tools (Codex, Cursor, etc.)
 
 ## License
 

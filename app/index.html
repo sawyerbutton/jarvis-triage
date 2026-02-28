@@ -55,6 +55,18 @@
       margin-bottom: 8px;
     }
     #ws-send:hover { background: #3a5a7a; }
+    .sim-bar { display: flex; gap: 6px; margin: 8px 0; }
+    .sim-bar button {
+      background: #2a3a2a;
+      color: #7fdb7f;
+      border: 1px solid #4a6a4a;
+      border-radius: 4px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: monospace;
+    }
+    .sim-bar button:hover { background: #3a5a3a; }
   </style>
 </head>
 <body>
@@ -67,6 +79,12 @@
     <div>Status: <span id="ws-status">—</span></div>
     <textarea id="ws-input" rows="4" placeholder='{"level":1,"title":"Test","hudLines":["Line 1"]}'></textarea>
     <button id="ws-send">Send Payload</button>
+    <h2>Simulate Ring Input</h2>
+    <div class="sim-bar">
+      <button id="sim-up">Scroll Up</button>
+      <button id="sim-click">Click</button>
+      <button id="sim-down">Scroll Down</button>
+    </div>
     <h2>Event Log</h2>
     <div id="event-log"></div>
   </div>

@@ -95,6 +95,41 @@ function setupDevSendButton(): void {
       appendEventLog(`[dev] invalid JSON: ${e}`);
     }
   });
+
+  // Simulate ring input buttons (for browser testing without simulator/glasses)
+  setupSimButtons();
+}
+
+/** Wire up simulated ring input buttons */
+function setupSimButtons(): void {
+  // Track which list item is highlighted (for L2/L3 option selection)
+  let simIndex = 0;
+
+  const click = document.getElementById('sim-click');
+  const up = document.getElementById('sim-up');
+  const down = document.getElementById('sim-down');
+
+  const optionCount = () => state.payload?.decisions?.[0]?.options?.length ?? 2;
+
+  up?.addEventListener('click', () => {
+    simIndex = Math.max(0, simIndex - 1);
+    appendEventLog(`[sim] scroll up → index=${simIndex}`);
+    void dispatch({ type: 'scroll_up' }, simIndex).then(syncDevPanel);
+  });
+
+  down?.addEventListener('click', () => {
+    simIndex = Math.min(optionCount() - 1, simIndex + 1);
+    appendEventLog(`[sim] scroll down → index=${simIndex}`);
+    void dispatch({ type: 'scroll_down' }, simIndex).then(syncDevPanel);
+  });
+
+  click?.addEventListener('click', () => {
+    appendEventLog(`[sim] click → index=${simIndex}`);
+    void dispatch({ type: 'click' }, simIndex).then(() => {
+      simIndex = 0; // reset after selection
+      syncDevPanel();
+    });
+  });
 }
 
 void boot().catch((err) => {
